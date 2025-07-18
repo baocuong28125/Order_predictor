@@ -19,7 +19,7 @@ st.title("📦 Ứng dụng Phân tích & Dự đoán Đơn hàng")
 uploaded_file = st.sidebar.file_uploader("📤 Tải lên file CSV dữ liệu", type=["csv"])
 
 if uploaded_file:
-    df = pd.read_csv(uploaded_file)
+    df = pd.read_csv("https://raw.githubusercontent.com/baocuong28125/Order_predictor/refs/heads/main/orders_sample_with_stock.csv")
     st.success("✅ Đã tải dữ liệu thành công!")
 
     # Chuyển đổi định dạng ngày
