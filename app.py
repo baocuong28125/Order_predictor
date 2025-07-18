@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 # Load data
-df = pd.read_csv("orders_sample_with_stock.csv")
+df = pd.read_csv("https://raw.githubusercontent.com/baocuong28125/Order_predictor/refs/heads/main/orders_sample_with_stock.csv")
 df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
 df['Order_Month'] = df['Date'].dt.month
 
