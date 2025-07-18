@@ -91,7 +91,7 @@ elif menu == "🤖 Mô hình dự đoán":
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         mae = mean_absolute_error(y_test, y_pred)
-        rmse = mean_squared_error(y_test, y_pred, squared=True)  # ✅ sửa lỗi ở đây
+        rmse = mean_squared_error(y_test, y_pred) ** 0.5  # ✅ sửa lỗi ở đây
         r2 = r2_score(y_test, y_pred)
         results.append((name, round(mae, 2), round(rmse, 2), round(r2, 3)))
 
