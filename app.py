@@ -71,15 +71,15 @@ if menu == "📊 Trực quan hóa dữ liệu":
 
 elif menu == "🧹 Tiền xử lý":
     st.subheader("Thông tin dữ liệu đầu vào")
-    st.code("""df.head()""", language='python')
+    st.code("df.head()", language='python')
     st.write(df.head())
 
     st.subheader("Giá trị thiếu")
-    st.code("""df.isnull().sum()""",language="python")
+    st.code("df.isnull().sum()",language="python")
     st.write(df.isnull().sum())
 
     st.subheader("Mã hóa SKU → SKU_Code")
-    st.code("""df[['SKU', 'SKU_Code']].drop_duplicates()""", language='python')
+    st.code("df[['SKU', 'SKU_Code']].drop_duplicates()", language='python')
     st.write(df[['SKU', 'SKU_Code']].drop_duplicates())
 
     st.subheader("Các biến tạo mới")
@@ -87,7 +87,7 @@ elif menu == "🧹 Tiền xử lý":
     st.markdown("- Total_Revenue")
 
     st.subheader("Thống kê mô tả")
-    st.code("""df.describe()""",language='python')
+    st.code("df.describe()",language='python')
     st.write(df.describe())
 
 elif menu == "🤖 Mô hình dự đoán":
