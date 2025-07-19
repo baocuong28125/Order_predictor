@@ -35,14 +35,9 @@ if menu == "📊 Trực quan hóa dữ liệu":
     st.pyplot(fig1)
 
     st.subheader("2. Tổng đặt hàng theo SKU")
-    code_visualization_2 = '''
-st.subheader("2. Tổng đặt hàng theo SKU")
-fig2, ax2 = plt.subplots(figsize=(10, 4))
-df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
-st.pyplot(fig2)
-'''
-
-st.code(code_visualization_2, language='python')
+    st.code('''fig2, ax2 = plt.subplots(figsize=(10, 4))
+    df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
+    st.pyplot(fig2)''', language='python')
     fig2, ax2 = plt.subplots(figsize=(10, 4))
     df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
     st.pyplot(fig2)
