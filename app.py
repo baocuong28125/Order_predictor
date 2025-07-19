@@ -87,7 +87,7 @@ elif menu == "🧹 Tiền xử lý":
     st.markdown("- Total_Revenue")
 
     st.subheader("Thống kê mô tả")
-    st.code('''df.describe()''', language='python')
+    st.code("""df.describe()""", language='python')
     st.write(df.describe())
 
 elif menu == "🤖 Mô hình dự đoán":
