@@ -111,28 +111,57 @@ elif menu == "🧹 Tiền xử lý":
     st.write(df.describe())
 
 elif menu == "🤖 Mô hình dự đoán":
-    st.subheader("Huấn luyện & đánh giá mô hình")
+    st.set_page_config(page_title="Dự đoán đơn hàng", layout="centered")
 
-    # Dữ liệu đầu vào
-    X = df[['SKU_Code', 'Stock_Remaining', 'Order_Month']]
-    y = df['Quantity_Ordered']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Load dữ liệu từ GitHub
+df = pd.read_csv("https://raw.githubusercontent.com/baocuong28125/Order_predictor/main/orders_sample_with_stock.csv")
 
-    models = {
-        "Linear Regression": LinearRegression(),
-        "Decision Tree": DecisionTreeRegressor(random_state=42),
-        "Random Forest": RandomForestRegressor(n_estimators=100, random_state=42),
-        "XGBoost": XGBRegressor(n_estimators=100, random_state=42)
-    }
+st.title("Ứng dụng Dự đoán Đơn hàng với Random Forest")
 
-    results = []
-    for name, model in models.items():
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        mae = mean_absolute_error(y_test, y_pred)
-        rmse = mean_squared_error(y_test, y_pred) ** 0.5  # ✅ sửa lỗi ở đây
-        r2 = r2_score(y_test, y_pred)
-        results.append((name, round(mae, 2), round(rmse, 2), round(r2, 3)))
+# Hiển thị mã huấn luyện bằng st.code
+st.subheader("Mã Python: Huấn luyện mô hình Random Forest")
+rf_code = '''
+X = df[['SKU_Code', 'Stock_Remaining', 'Order_Month']]
+y = df['Quantity_Ordered']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    results_df = pd.DataFrame(results, columns=["Model", "MAE", "RMSE", "R²"])
-    st.dataframe(results_df.sort_values("R²", ascending=False))
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+mae = mean_absolute_error(y_test, y_pred)
+rmse = mean_squared_error(y_test, y_pred) ** 0.5
+r2 = r2_score(y_test, y_pred)
+'''
+st.code(rf_code, language='python')
+
+# Huấn luyện mô hình
+X = df[['SKU_Code', 'Stock_Remaining', 'Order_Month']]
+y = df['Quantity_Ordered']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+# Đánh giá mô hình
+mae = mean_absolute_error(y_test, y_pred)
+rmse = mean_squared_error(y_test, y_pred) ** 0.5
+r2 = r2_score(y_test, y_pred)
+
+# Hiển thị kết quả
+st.subheader("Kết quả đánh giá mô hình")
+st.write(f"MAE: {mae:.2f}")
+st.write(f"RMSE: {rmse:.2f}")
+st.write(f"R²: {r2:.3f}")
+
+# Trực quan hóa kết quả dự đoán
+st.subheader("Biểu đồ: Thực tế vs Dự đoán")
+
+fig, ax = plt.subplots()
+ax.scatter(y_test, y_pred, alpha=0.6)
+ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
+ax.set_xlabel("Giá trị Thực tế")
+ax.set_ylabel("Giá trị Dự đoán")
+ax.set_title("So sánh Giá trị Thực tế và Dự đoán")
+st.pyplot(fig)
