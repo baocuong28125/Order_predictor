@@ -30,6 +30,14 @@ menu = st.sidebar.radio("Chọn chức năng", ["📊 Trực quan hóa dữ li�
 
 if menu == "📊 Trực quan hóa dữ liệu":
     st.subheader("1. Tổng số lượng đặt hàng theo tháng")
+    code_visualization_2 = '''
+st.subheader("2. Tổng đặt hàng theo SKU")
+fig2, ax2 = plt.subplots(figsize=(10, 4))
+df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
+st.pyplot(fig2)
+'''
+
+st.code(code_visualization_2, language='python')
     fig1, ax1 = plt.subplots()
     sns.barplot(x='Order_Month', y='Quantity_Ordered', data=df, ax=ax1)
     st.pyplot(fig1)
