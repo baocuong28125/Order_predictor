@@ -59,6 +59,8 @@ elif menu == "🧹 Tiền xử lý":
     st.write(df.head())
 
     st.subheader("Giá trị thiếu")
+    st.code("""st.write(df.isnull().sum())
+    """,language="python")
     st.write(df.isnull().sum())
 
     st.subheader("Mã hóa SKU → SKU_Code")
