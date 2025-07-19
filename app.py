@@ -30,46 +30,60 @@ menu = st.sidebar.radio("Chọn chức năng", ["📊 Trực quan hóa dữ li�
 
 if menu == "📊 Trực quan hóa dữ liệu":
     st.subheader("1. Tổng số lượng đặt hàng theo tháng")
-    st.code(""" fig1, ax1 = plt.subplots()sns.barplot(x='Order_Month', y='Quantity_Ordered', data=df, ax=ax1)st.pyplot(fig1)"", language='python')
+    st.code(
+        """
+        fig1, ax1 = plt.subplots()
+        sns.barplot(x='Order_Month', y='Quantity_Ordered', data=df, ax=ax1)
+        st.pyplot(fig1)
+        """,
+        language='python')
     fig1, ax1 = plt.subplots()
     sns.barplot(x='Order_Month', y='Quantity_Ordered', data=df, ax=ax1)
     st.pyplot(fig1)
 
     st.subheader("2. Tổng đặt hàng theo SKU")
-    st.code("""
+    st.code(
+        """
             fig2, ax2 = plt.subplots(figsize=(10, 4))
             df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
-            st.pyplot(fig2)""",
+            st.pyplot(fig2)
+            """,
             language='python')
     fig2, ax2 = plt.subplots(figsize=(10, 4))
     df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
     st.pyplot(fig2)
 
     st.subheader("3. Trung bình tồn kho theo SKU")
-    st.code("""
+    st.code(
+        """
     fig3, ax3 = plt.subplots()
     df.groupby('SKU')['Stock_Remaining'].mean().plot(kind='barh', ax=ax3)
-    st.pyplot(fig3)""",
+    st.pyplot(fig3)
+    """,
             language='python')
     fig3, ax3 = plt.subplots()
     df.groupby('SKU')['Stock_Remaining'].mean().plot(kind='barh', ax=ax3)
     st.pyplot(fig3)
 
     st.subheader("4. Phân phối số lượng đặt hàng")
-    st.code("""
+    st.code(
+        """
     fig4, ax4 = plt.subplots() sns.histplot(
     df['Quantity_Ordered'], kde=True, bins=20, ax=ax4) 
-    st.pyplot(fig4)""",
+    st.pyplot(fig4)
+    """,
             language='python')
     fig4, ax4 = plt.subplots()
     sns.histplot(df['Quantity_Ordered'], kde=True, bins=20, ax=ax4)
     st.pyplot(fig4)
 
     st.subheader("5. Doanh thu theo sản phẩm")
-    st.code("""
+    st.code(
+        """
     fig5, ax5 = plt.subplots() 
     df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5) 
-    st.pyplot(fig5)""",
+    st.pyplot(fig5)
+    """,
             language='python')
     fig5, ax5 = plt.subplots()
     df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5)
