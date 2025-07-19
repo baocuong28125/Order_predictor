@@ -56,6 +56,7 @@ if menu == "📊 Trực quan hóa dữ liệu":
 
 elif menu == "🧹 Tiền xử lý":
     st.subheader("Thông tin dữ liệu đầu vào")
+    st.code(df.head(), language='python')
     st.write(df.head())
 
     st.subheader("Giá trị thiếu")
@@ -63,6 +64,7 @@ elif menu == "🧹 Tiền xử lý":
     st.write(df.isnull().sum())
 
     st.subheader("Mã hóa SKU → SKU_Code")
+    st.code(df[['SKU', 'SKU_Code']].drop_duplicates(), language='python')
     st.write(df[['SKU', 'SKU_Code']].drop_duplicates())
 
     st.subheader("Các biến tạo mới")
