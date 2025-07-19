@@ -63,8 +63,8 @@ if menu == "📊 Trực quan hóa dữ liệu":
 
     st.subheader("5. Doanh thu theo sản phẩm")
     st.code("""fig5, ax5 = plt.subplots()
-    df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5)
-    st.pyplot(fig5)""",language='python')
+            df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5)
+            st.pyplot(fig5)""",language='python')
     fig5, ax5 = plt.subplots()
     df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5)
     st.pyplot(fig5)
