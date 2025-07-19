@@ -36,25 +36,41 @@ if menu == "📊 Trực quan hóa dữ liệu":
     st.pyplot(fig1)
 
     st.subheader("2. Tổng đặt hàng theo SKU")
-    st.code("""fig2, ax2 = plt.subplots(figsize=(10, 4))df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)st.pyplot(fig2)""", language='python')
+    st.code("""
+            fig2, ax2 = plt.subplots(figsize=(10, 4))
+            df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
+            st.pyplot(fig2)""",
+            language='python')
     fig2, ax2 = plt.subplots(figsize=(10, 4))
     df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
     st.pyplot(fig2)
 
     st.subheader("3. Trung bình tồn kho theo SKU")
-    st.code("""fig3, ax3 = plt.subplots()df.groupby('SKU')['Stock_Remaining'].mean().plot(kind='barh', ax=ax3)st.pyplot(fig3)""", language='python')
+    st.code("""
+    fig3, ax3 = plt.subplots()
+    df.groupby('SKU')['Stock_Remaining'].mean().plot(kind='barh', ax=ax3)
+    st.pyplot(fig3)""",
+            language='python')
     fig3, ax3 = plt.subplots()
     df.groupby('SKU')['Stock_Remaining'].mean().plot(kind='barh', ax=ax3)
     st.pyplot(fig3)
 
     st.subheader("4. Phân phối số lượng đặt hàng")
-    st.code("""fig4, ax4 = plt.subplots() sns.histplot(df['Quantity_Ordered'], kde=True, bins=20, ax=ax4) st.pyplot(fig4)""",language='python')
+    st.code("""
+    fig4, ax4 = plt.subplots() sns.histplot(
+    df['Quantity_Ordered'], kde=True, bins=20, ax=ax4) 
+    st.pyplot(fig4)""",
+            language='python')
     fig4, ax4 = plt.subplots()
     sns.histplot(df['Quantity_Ordered'], kde=True, bins=20, ax=ax4)
     st.pyplot(fig4)
 
     st.subheader("5. Doanh thu theo sản phẩm")
-    st.code("""fig5, ax5 = plt.subplots() df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5) st.pyplot(fig5)""",language='python')
+    st.code("""
+    fig5, ax5 = plt.subplots() 
+    df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5) 
+    st.pyplot(fig5)""",
+            language='python')
     fig5, ax5 = plt.subplots()
     df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5)
     st.pyplot(fig5)
