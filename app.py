@@ -17,6 +17,7 @@ st.title("📦 Ứng dụng Phân tích & Dự đoán Đơn hàng")
 # ✅ Đọc dữ liệu từ GitHub
 url = "https://raw.githubusercontent.com/baocuong28125/Order_predictor/main/orders_sample_with_stock.csv"
 df = pd.read_csv(url)
+df.columns = df.columns.str.strip().str.lower()
 
 # ✅ Tiền xử lý
 df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
@@ -111,18 +112,14 @@ elif menu == "🧹 Tiền xử lý":
     st.write(df.describe())
 
 elif menu == "🤖 Mô hình dự đoán":
-    st.set_page_config(page_title="Dự đoán đơn hàng", layout="centered")
-
-# Load dữ liệu từ GitHub
-df = pd.read_csv("https://raw.githubusercontent.com/baocuong28125/Order_predictor/main/orders_sample_with_stock.csv")
-
 st.title("Ứng dụng Dự đoán Đơn hàng với Random Forest")
 
 # Hiển thị mã huấn luyện bằng st.code
 st.subheader("Mã Python: Huấn luyện mô hình Random Forest")
 rf_code = '''
-X = df[['SKU_Code', 'Stock_Remaining', 'Order_Month']]
-y = df['Quantity_Ordered']
+X = df[['sku_code', 'stock_remaining', 'order_month']]
+y = df['quantity_ordered']
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 model = RandomForestRegressor(n_estimators=100, random_state=42)
@@ -136,8 +133,8 @@ r2 = r2_score(y_test, y_pred)
 st.code(rf_code, language='python')
 
 # Huấn luyện mô hình
-X = df[['SKU_Code', 'Stock_Remaining', 'Order_Month']]
-y = df['Quantity_Ordered']
+X = df[['sku_code', 'stock_remaining', 'order_month']]
+y = df['quantity_ordered']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 model = RandomForestRegressor(n_estimators=100, random_state=42)
