@@ -1,164 +1,81 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor
+import os
 from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
-# Set layout
-st.set_page_config(page_title="Phân tích & Dự đoán Đơn hàng", layout="wide")
-st.title("📦 Ứng dụng Phân tích & Dự đoán Đơn hàng")
+st.set_page_config(page_title="Dự đoán Đơn hàng", layout="centered")
 
-# ✅ Đọc dữ liệu từ GitHub
-url = "https://raw.githubusercontent.com/baocuong28125/Order_predictor/main/orders_sample_with_stock.csv"
-df = pd.read_csv(url)
-df.columns = df.columns.str.strip().str.lower()
+# Xác định đường dẫn file CSV (cùng thư mục với app.py)
+file_path = os.path.join(os.path.dirname(__file__), "orders_sample_with_stock.csv")
 
-# ✅ Tiền xử lý
-df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
+# Đọc dữ liệu
+try:
+    df = pd.read_csv(file_path)
+except FileNotFoundError:
+    st.error("Không tìm thấy file 'orders_sample_with_stock.csv'. Hãy chắc chắn rằng file này nằm cùng thư mục với app.py.")
+    st.stop()
+
+# Kiểm tra dữ liệu rỗng
+if df.empty:
+    st.error("File dữ liệu rỗng hoặc không đọc được.")
+    st.stop()
+
+# Kiểm tra cột Date
+if 'Date' not in df.columns:
+    st.error("Không tìm thấy cột 'Date' trong dữ liệu. Vui lòng kiểm tra lại file.")
+    st.write("Các cột hiện có:", df.columns.tolist())
+    st.stop()
+
+# Chuyển đổi kiểu dữ liệu ngày
+df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+if df['Date'].isna().all():
+    st.error("Không thể chuyển đổi giá trị trong cột 'Date' sang định dạng ngày tháng.")
+    st.stop()
+
+# Thêm cột tháng
 df['Order_Month'] = df['Date'].dt.month
-df['Total_Revenue'] = df['Quantity_Ordered'] * df['Unit_Price']
+
+# Mã hóa SKU
+if 'SKU' not in df.columns:
+    st.error("Không tìm thấy cột 'SKU' trong dữ liệu.")
+    st.stop()
+
 le = LabelEncoder()
 df['SKU_Code'] = le.fit_transform(df['SKU'])
 
-# Menu chức năng
-menu = st.sidebar.radio("Chọn chức năng", ["📊 Trực quan hóa dữ liệu", "🧹 Tiền xử lý", "🤖 Mô hình dự đoán"])
+# Kiểm tra cột Quantity_Ordered & Stock_Remaining
+required_cols = ['Quantity_Ordered', 'Stock_Remaining']
+for col in required_cols:
+    if col not in df.columns:
+        st.error(f"Không tìm thấy cột '{col}' trong dữ liệu.")
+        st.stop()
 
-if menu == "📊 Trực quan hóa dữ liệu":
-    st.subheader("1. Tổng số lượng đặt hàng theo tháng")
-    st.code(
-        """
-        fig1, ax1 = plt.subplots()
-        sns.barplot(x='Order_Month', y='Quantity_Ordered', data=df, ax=ax1)
-        st.pyplot(fig1)
-        """,
-        language='python')
-    fig1, ax1 = plt.subplots()
-    sns.barplot(x='Order_Month', y='Quantity_Ordered', data=df, ax=ax1)
-    st.pyplot(fig1)
+# Tạo X, y
+X = df[['SKU_Code', 'Stock_Remaining', 'Order_Month']]
+y = df['Quantity_Ordered']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    st.subheader("2. Tổng đặt hàng theo SKU")
-    st.code(
-        """
-            fig2, ax2 = plt.subplots(figsize=(10, 4))
-            df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
-            st.pyplot(fig2)
-            """,
-            language='python')
-    fig2, ax2 = plt.subplots(figsize=(10, 4))
-    df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False).plot(kind='bar', ax=ax2)
-    st.pyplot(fig2)
+# Huấn luyện mô hình
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
 
-    st.subheader("3. Trung bình tồn kho theo SKU")
-    st.code(
-        """
-    fig3, ax3 = plt.subplots()
-    df.groupby('SKU')['Stock_Remaining'].mean().plot(kind='barh', ax=ax3)
-    st.pyplot(fig3)
-    """,
-            language='python')
-    fig3, ax3 = plt.subplots()
-    df.groupby('SKU')['Stock_Remaining'].mean().plot(kind='barh', ax=ax3)
-    st.pyplot(fig3)
+# Giao diện
+st.title("Ứng dụng Phân tích & Dự đoán Đơn hàng")
 
-    st.subheader("4. Phân phối số lượng đặt hàng")
-    st.code(
-        """
-    fig4, ax4 = plt.subplots() sns.histplot(
-    df['Quantity_Ordered'], kde=True, bins=20, ax=ax4) 
-    st.pyplot(fig4)
-    """,
-            language='python')
-    fig4, ax4 = plt.subplots()
-    sns.histplot(df['Quantity_Ordered'], kde=True, bins=20, ax=ax4)
-    st.pyplot(fig4)
+# Hiển thị preview dữ liệu
+with st.expander("Xem dữ liệu đầu vào"):
+    st.dataframe(df.head())
 
-    st.subheader("5. Doanh thu theo sản phẩm")
-    st.code(
-        """
-    fig5, ax5 = plt.subplots() 
-    df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5) 
-    st.pyplot(fig5)
-    """,
-            language='python')
-    fig5, ax5 = plt.subplots()
-    df.groupby('Product_Name')['Total_Revenue'].sum().sort_values().plot(kind='barh', ax=ax5)
-    st.pyplot(fig5)
+sku_input = st.selectbox("Chọn sản phẩm", df['SKU'].unique())
+stock_input = st.slider("Tồn kho hiện tại", 0, 100, 10)
+month_input = st.slider("Tháng đặt hàng", 1, 12, 6)
 
-elif menu == "🧹 Tiền xử lý":
-    st.subheader("Thông tin dữ liệu đầu vào")
-    st.code("df.head()", language='python')
-    st.write(df.head())
+# Dự đoán
+sku_code = le.transform([sku_input])[0]
+input_data = [[sku_code, stock_input, month_input]]
+predicted_qty = model.predict(input_data)[0]
 
-    st.subheader("Giá trị thiếu")
-    st.code("df.isnull().sum()",language="python")
-    st.write(df.isnull().sum())
-
-    st.subheader("Mã hóa SKU → SKU_Code")
-    st.code("df[['SKU', 'SKU_Code']].drop_duplicates()", language='python')
-    st.write(df[['SKU', 'SKU_Code']].drop_duplicates())
-
-    st.subheader("Các biến tạo mới")
-    st.markdown("- Order_Month")
-    st.markdown("- Total_Revenue")
-
-    st.subheader("Thống kê mô tả")
-    st.code("df.describe()",language='python')
-    st.write(df.describe())
-
-elif menu == "🤖 Mô hình dự đoán":
-    st.title("Ứng dụng Dự đoán Đơn hàng với Random Forest")
-    
-    # Hiển thị mã huấn luyện bằng st.code
-    st.subheader("Mã Python: Huấn luyện mô hình Random Forest")
-    rf_code = '''
-    X = df[['sku_code', 'stock_remaining', 'order_month']]
-    y = df['quantity_ordered']
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = mean_squared_error(y_test, y_pred) ** 0.5
-    r2 = r2_score(y_test, y_pred)
-    '''
-    st.code(rf_code, language='python')
-    
-    # Huấn luyện mô hình
-    X = df[['sku_code', 'stock_remaining', 'order_month']]
-    y = df['quantity_ordered']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    
-    # Đánh giá mô hình
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = mean_squared_error(y_test, y_pred) ** 0.5
-    r2 = r2_score(y_test, y_pred)
-    
-    # Hiển thị kết quả
-    st.subheader("Kết quả đánh giá mô hình")
-    st.write(f"MAE: {mae:.2f}")
-    st.write(f"RMSE: {rmse:.2f}")
-    st.write(f"R²: {r2:.3f}")
-    
-    # Trực quan hóa kết quả dự đoán
-    st.subheader("Biểu đồ: Thực tế vs Dự đoán")
-    
-    fig, ax = plt.subplots()
-    ax.scatter(y_test, y_pred, alpha=0.6)
-    ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--')
-    ax.set_xlabel("Giá trị Thực tế")
-    ax.set_ylabel("Giá trị Dự đoán")
-    ax.set_title("So sánh Giá trị Thực tế và Dự đoán")
-    st.pyplot(fig)
+st.subheader("Kết quả dự đoán:")
+st.write(f"Số lượng dự đoán: **{int(predicted_qty)}** đơn vị")
