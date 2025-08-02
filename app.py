@@ -19,7 +19,7 @@ except ImportError:
 # Setting up the Streamlit app title
 st.title("Complete Data Analysis and Modeling for Orders Sample")
 
-# --- Step 1: Load and Preprocess Data ---
+# --- Load and Preprocess Data ---
 st.header("Data Loading and Preprocessing")
 
 @st.cache_data
@@ -100,7 +100,7 @@ st.write(processed_data.dtypes)
 """, language="python")
 
 # --- Analyze and Visualize Data ---
-st.header("Step 3: Data Analysis and Visualization")
+st.header("Data Analysis and Visualization")
 
 # Chart 1: Total Quantity Ordered by Product
 st.subheader("Chart 1: Total Quantity Ordered by Product")
