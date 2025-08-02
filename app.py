@@ -20,7 +20,7 @@ except ImportError:
 st.title("Complete Data Analysis and Modeling for Orders Sample")
 
 # --- Step 1: Load and Preprocess Data ---
-st.header("Step 1: Data Loading and Preprocessing")
+st.header("Data Loading and Preprocessing")
 
 @st.cache_data
 def load_data():
@@ -62,8 +62,8 @@ def preprocess_data(data):
 data = load_data()
 processed_data, missing_values = preprocess_data(data)
 
-# --- Step 2: Describe the Data ---
-st.header("Step 2: Data Description")
+# --- Describe the Data ---
+st.header("Data Description")
 st.write("This dataset contains order information for various Apple products, including iPhone 13, iPad Air, Apple Watch, MacBook Air, and AirPods Pro. The key columns are:")
 st.write("- **Date**: Date of the order (converted to datetime).")
 st.write("- **SKU**: Unique product identifier.")
@@ -82,7 +82,7 @@ st.write(processed_data.dtypes)
 
 st.subheader("Code for Data Description")
 st.code("""
-st.header("Step 2: Data Description")
+st.header("Data Description")
 st.write("This dataset contains order information for various Apple products...")
 st.write("- **Date**: Date of the order (converted to datetime).")
 st.write("- **SKU**: Unique product identifier.")
@@ -99,7 +99,7 @@ st.subheader("Data Types")
 st.write(processed_data.dtypes)
 """, language="python")
 
-# --- Step 3: Analyze and Visualize Data ---
+# --- Analyze and Visualize Data ---
 st.header("Step 3: Data Analysis and Visualization")
 
 # Chart 1: Total Quantity Ordered by Product
@@ -177,8 +177,8 @@ fig5 = px.scatter(processed_data, x='Quantity_Ordered', y='Stock_Remaining', col
 st.plotly_chart(fig5)
 """, language="python")
 
-# --- Step 4: Model Selection and Training ---
-st.header("Step 4: Model Selection and Training")
+# --- Model Selection and Training ---
+st.header("Model Selection and Training")
 st.write("Given the dataset, a suitable task is to predict **Total_Price** based on features like Quantity_Ordered, Unit_Price, Stock_Remaining, and Product_Name. Since this is a regression task (predicting a continuous variable), a **Random Forest Regressor** is chosen for its robustness, ability to handle non-linear relationships, and feature importance insights.")
 
 def train_model(data):
@@ -218,8 +218,8 @@ st.subheader("Model Performance")
 st.write(f"Mean Squared Error: {mse:.2f}")
 st.write(f"R² Score: {r2:.2f}")
 
-# --- Step 5: Save Processed Data ---
-st.header("Step 5: Save Processed Data")
+# --- Save Processed Data ---
+st.header("Save Processed Data")
 output = io.StringIO()
 processed_data.to_csv(output, index=False)
 st.download_button(
