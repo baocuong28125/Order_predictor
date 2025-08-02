@@ -9,6 +9,13 @@ from sklearn.metrics import mean_squared_error, r2_score
 import plotly.express as px
 import plotly.graph_objects as go
 
+# Dependency check
+try:
+    import plotly.express as px
+except ImportError:
+    st.error("Missing dependency: 'plotly' is not installed. Please run 'pip install plotly' and try again.")
+    st.stop()
+
 # Setting up the Streamlit app title
 st.title("Complete Data Analysis and Modeling for Orders Sample")
 
@@ -175,23 +182,15 @@ st.header("Step 4: Model Selection and Training")
 st.write("Given the dataset, a suitable task is to predict **Total_Price** based on features like Quantity_Ordered, Unit_Price, Stock_Remaining, and Product_Name. Since this is a regression task (predicting a continuous variable), a **Random Forest Regressor** is chosen for its robustness, ability to handle non-linear relationships, and feature importance insights.")
 
 def train_model(data):
-    # Prepare features and target
     X = data[['Quantity_Ordered', 'Unit_Price', 'Stock_Remaining']]
     X = pd.concat([X, pd.get_dummies(data['Product_Name'], prefix='Product')], axis=1)
     y = data['Total_Price']
-    
-    # Split data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Train Random Forest model
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
-    
-    # Evaluate model
     y_pred = model.predict(X_test)
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
-    
     return model, mse, r2
 
 st.subheader("Code for Model Training")
