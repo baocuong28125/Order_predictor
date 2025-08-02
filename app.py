@@ -1,194 +1,246 @@
 import streamlit as st
 import pandas as pd
+import io
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
-import os
+from sklearn.metrics import mean_squared_error, r2_score
+import plotly.express as px
+import plotly.graph_objects as go
 
-# Thiết lập cấu hình trang
-st.set_page_config(page_title="Phân tích & Dự đoán Đơn hàng", layout="wide")
+# Setting up the Streamlit app title
+st.title("Complete Data Analysis and Modeling for Orders Sample")
 
-# -----------------------
-# 1. XỬ LÝ DỮ LIỆU
-# -----------------------
-# Đường dẫn file
-file_path = os.path.join(os.path.dirname(__file__), "orders_sample_with_stock.csv")
+# --- Step 1: Load and Preprocess Data ---
+st.header("Step 1: Data Loading and Preprocessing")
 
-# Đọc dữ liệu
-try:
-    df = pd.read_csv(file_path)
-except FileNotFoundError:
-    st.error("Không tìm thấy file 'orders_sample_with_stock.csv'. Hãy chắc chắn rằng file này nằm cùng thư mục với app.py.")
-    st.stop()
+@st.cache_data
+def load_data():
+    data = pd.read_csv("orders_sample_with_stock.csv")
+    return data
 
-# Kiểm tra dữ liệu rỗng
-if df.empty:
-    st.error("File dữ liệu rỗng hoặc không đọc được.")
-    st.stop()
+def preprocess_data(data):
+    data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
+    missing_values = data.isnull().sum()
+    data['Quantity_Ordered'] = pd.to_numeric(data['Quantity_Ordered'], errors='coerce')
+    data['Unit_Price'] = pd.to_numeric(data['Unit_Price'], errors='coerce')
+    data['Stock_Remaining'] = pd.to_numeric(data['Stock_Remaining'], errors='coerce')
+    data = data.dropna()
+    data['Total_Price'] = data['Quantity_Ordered'] * data['Unit_Price']
+    return data, missing_values
 
-# Xử lý dữ liệu
-# Chuyển đổi cột Date sang định dạng datetime
-df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
-
-# Tạo cột Order_Month từ cột Date
-df['Order_Month'] = df['Date'].dt.month
-
-# Xử lý giá trị thiếu
-df = df.dropna(subset=['Date', 'Order_Month', 'SKU', 'Quantity_Ordered', 'Stock_Remaining', 'Unit_Price'])
-
-# Xóa các bản ghi trùng lặp
-df = df.drop_duplicates()
-
-# Kiểm tra và chuẩn hóa dữ liệu số
-df['Quantity_Ordered'] = pd.to_numeric(df['Quantity_Ordered'], errors='coerce').fillna(0).astype(int)
-df['Stock_Remaining'] = pd.to_numeric(df['Stock_Remaining'], errors='coerce').fillna(0).astype(int)
-df['Unit_Price'] = pd.to_numeric(df['Unit_Price'], errors='coerce').fillna(0).astype(float)
-
-# Mã hóa cột SKU thành giá trị số
-le = LabelEncoder()
-df['SKU_Code'] = le.fit_transform(df['SKU'])
-
-# -----------------------
-# 2. KHÁM PHÁ DỮ LIỆU
-# -----------------------
-st.title("📊 Phân tích dữ liệu đơn hàng")
-st.subheader("1. Tổng quan dữ liệu")
-st.write("Kích thước dữ liệu:", df.shape)
-st.write("Các cột dữ liệu:", df.columns.tolist())
-st.dataframe(df.head())
-
-# -----------------------
-# 3. TRỰC QUAN HÓA
-# -----------------------
-st.subheader("2. Trực quan hóa dữ liệu")
-
-# Biểu đồ 1: Tổng Quantity theo SKU
-st.markdown("### Biểu đồ 1: Tổng số lượng đặt hàng theo SKU")
-fig1, ax1 = plt.subplots(figsize=(10, 6))
-sku_quantity = df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False)
-sns.barplot(x=sku_quantity.index, y=sku_quantity.values, ax=ax1, palette="muted")
-ax1.set_title("Tổng Quantity theo SKU", fontsize=14)
-ax1.set_xlabel("SKU", fontsize=12)
-ax1.set_ylabel("Tổng Quantity", fontsize=12)
-plt.xticks(rotation=45)
-st.pyplot(fig1)
+st.subheader("Code for Loading and Preprocessing Data")
 st.code("""
-fig1, ax1 = plt.subplots(figsize=(10, 6))
-sku_quantity = df.groupby('SKU')['Quantity_Ordered'].sum().sort_values(ascending=False)
-sns.barplot(x=sku_quantity.index, y=sku_quantity.values, ax=ax1, palette="muted")
-ax1.set_title("Tổng Quantity theo SKU", fontsize=14)
-ax1.set_xlabel("SKU", fontsize=12)
-ax1.set_ylabel("Tổng Quantity", fontsize=12)
-plt.xticks(rotation=45)
-st.pyplot(fig1)
+import pandas as pd
+import io
+
+@st.cache_data
+def load_data():
+    data = pd.read_csv("orders_sample_with_stock.csv")
+    return data
+
+def preprocess_data(data):
+    data['Date'] = pd.to_datetime(data['Date'], format='%m/%d/%Y')
+    missing_values = data.isnull().sum()
+    data['Quantity_Ordered'] = pd.to_numeric(data['Quantity_Ordered'], errors='coerce')
+    data['Unit_Price'] = pd.to_numeric(data['Unit_Price'], errors='coerce')
+    data['Stock_Remaining'] = pd.to_numeric(data['Stock_Remaining'], errors='coerce')
+    data = data.dropna()
+    data['Total_Price'] = data['Quantity_Ordered'] * data['Unit_Price']
+    return data, missing_values
 """, language="python")
 
-# Biểu đồ 2: Tồn kho còn lại theo SKU
-st.markdown("### Biểu đồ 2: Tồn kho còn lại theo SKU")
-fig2, ax2 = plt.subplots(figsize=(10, 6))
-sku_stock = df.groupby('SKU')['Stock_Remaining'].mean()
-sns.barplot(x=sku_stock.index, y=sku_stock.values, ax=ax2, palette="viridis")
-ax2.set_title("Tồn kho trung bình theo SKU", fontsize=14)
-ax2.set_xlabel("SKU", fontsize=12)
-ax2.set_ylabel("Tồn kho trung bình", fontsize=12)
-plt.xticks(rotation=45)
-st.pyplot(fig2)
+# Load and preprocess data
+data = load_data()
+processed_data, missing_values = preprocess_data(data)
+
+# --- Step 2: Describe the Data ---
+st.header("Step 2: Data Description")
+st.write("This dataset contains order information for various Apple products, including iPhone 13, iPad Air, Apple Watch, MacBook Air, and AirPods Pro. The key columns are:")
+st.write("- **Date**: Date of the order (converted to datetime).")
+st.write("- **SKU**: Unique product identifier.")
+st.write("- **Product_Name**: Name of the product (e.g., iPhone 13, AirPods Pro).")
+st.write("- **Quantity_Ordered**: Number of units ordered.")
+st.write("- **Unit_Price**: Price per unit in USD.")
+st.write("- **Stock_Remaining**: Stock remaining after the order.")
+st.write("- **Total_Price**: Calculated as Quantity_Ordered * Unit_Price.")
+
+st.subheader("Basic Statistics")
+st.write(processed_data.describe())
+st.subheader("Missing Values")
+st.write(missing_values)
+st.subheader("Data Types")
+st.write(processed_data.dtypes)
+
+st.subheader("Code for Data Description")
 st.code("""
-fig2, ax2 = plt.subplots(figsize=(10, 6))
-sku_stock = df.groupby('SKU')['Stock_Remaining'].mean()
-sns.barplot(x=sku_stock.index, y=sku_stock.values, ax=ax2, palette="viridis")
-ax2.set_title("Tồn kho trung bình theo SKU", fontsize=14)
-ax2.set_xlabel("SKU", fontsize=12)
-ax2.set_ylabel("Tồn kho trung bình", fontsize=12)
-plt.xticks(rotation=45)
-st.pyplot(fig2)
+st.header("Step 2: Data Description")
+st.write("This dataset contains order information for various Apple products...")
+st.write("- **Date**: Date of the order (converted to datetime).")
+st.write("- **SKU**: Unique product identifier.")
+st.write("- **Product_Name**: Name of the product (e.g., iPhone 13, AirPods Pro).")
+st.write("- **Quantity_Ordered**: Number of units ordered.")
+st.write("- **Unit_Price**: Price per unit in USD.")
+st.write("- **Stock_Remaining**: Stock remaining after the order.")
+st.write("- **Total_Price**: Calculated as Quantity_Ordered * Unit_Price.")
+st.subheader("Basic Statistics")
+st.write(processed_data.describe())
+st.subheader("Missing Values")
+st.write(missing_values)
+st.subheader("Data Types")
+st.write(processed_data.dtypes)
 """, language="python")
 
-# Biểu đồ 3: Số lượng đơn hàng theo tháng
-st.markdown("### Biểu đồ 3: Số lượng đơn hàng theo tháng")
-fig3, ax3 = plt.subplots(figsize=(10, 6))
-month_quantity = df.groupby('Order_Month')['Quantity_Ordered'].sum()
-sns.lineplot(x=month_quantity.index, y=month_quantity.values, marker='o', ax=ax3, color='b')
-ax3.set_title("Số lượng đặt hàng theo tháng", fontsize=14)
-ax3.set_xlabel("Tháng", fontsize=12)
-ax3.set_ylabel("Tổng Quantity", fontsize=12)
-st.pyplot(fig3)
+# --- Step 3: Analyze and Visualize Data ---
+st.header("Step 3: Data Analysis and Visualization")
+
+# Chart 1: Total Quantity Ordered by Product
+st.subheader("Chart 1: Total Quantity Ordered by Product")
+qty_by_product = processed_data.groupby('Product_Name')['Quantity_Ordered'].sum().reset_index()
+fig1 = px.bar(qty_by_product, x='Product_Name', y='Quantity_Ordered', title='Total Quantity Ordered by Product',
+              color='Product_Name', color_discrete_sequence=px.colors.qualitative.Set2)
+st.plotly_chart(fig1)
+
+st.subheader("Code for Chart 1")
 st.code("""
-fig3, ax3 = plt.subplots(figsize=(10, 6))
-month_quantity = df.groupby('Order_Month')['Quantity_Ordered'].sum()
-sns.lineplot(x=month_quantity.index, y=month_quantity.values, marker='o', ax=ax3, color='b')
-ax3.set_title("Số lượng đặt hàng theo tháng", fontsize=14)
-ax3.set_xlabel("Tháng", fontsize=12)
-ax3.set_ylabel("Tổng Quantity", fontsize=12)
-st.pyplot(fig3)
+qty_by_product = processed_data.groupby('Product_Name')['Quantity_Ordered'].sum().reset_index()
+fig1 = px.bar(qty_by_product, x='Product_Name', y='Quantity_Ordered', title='Total Quantity Ordered by Product',
+              color='Product_Name', color_discrete_sequence=px.colors.qualitative.Set2)
+st.plotly_chart(fig1)
 """, language="python")
 
-# Biểu đồ 4: Phân bố số lượng đặt hàng
-st.markdown("### Biểu đồ 4: Phân bố số lượng đặt hàng (Histogram)")
-fig4, ax4 = plt.subplots(figsize=(10, 6))
-sns.histplot(df['Quantity_Ordered'], bins=20, kde=True, ax=ax4, color='g')
-ax4.set_title("Phân bố số lượng đặt hàng", fontsize=14)
-ax4.set_xlabel("Quantity Ordered", fontsize=12)
-ax4.set_ylabel("Tần suất", fontsize=12)
-st.pyplot(fig4)
+# Chart 2: Total Revenue by Product
+st.subheader("Chart 2: Total Revenue by Product")
+revenue_by_product = processed_data.groupby('Product_Name')['Total_Price'].sum().reset_index()
+fig2 = px.pie(revenue_by_product, names='Product_Name', values='Total_Price', title='Total Revenue by Product',
+              color_discrete_sequence=px.colors.qualitative.Set3)
+st.plotly_chart(fig2)
+
+st.subheader("Code for Chart 2")
 st.code("""
-fig4, ax4 = plt.subplots(figsize=(10, 6))
-sns.histplot(df['Quantity_Ordered'], bins=20, kde=True, ax=ax4, color='g')
-ax4.set_title("Phân bố số lượng đặt hàng", fontsize=14)
-ax4.set_xlabel("Quantity Ordered", fontsize=12)
-ax4.set_ylabel("Tần suất", fontsize=12)
-st.pyplot(fig4)
+revenue_by_product = processed_data.groupby('Product_Name')['Total_Price'].sum().reset_index()
+fig2 = px.pie(revenue_by_product, names='Product_Name', values='Total_Price', title='Total Revenue by Product',
+              color_discrete_sequence=px.colors.qualitative.Set3)
+st.plotly_chart(fig2)
 """, language="python")
 
-# Biểu đồ 5: Heatmap tương quan
-st.markdown("### Biểu đồ 5: Ma trận tương quan giữa các biến")
-fig5, ax5 = plt.subplots(figsize=(8, 6))
-corr = df[['Quantity_Ordered', 'Stock_Remaining', 'Order_Month', 'SKU_Code', 'Unit_Price']].corr()
-sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax5, fmt=".2f")
-ax5.set_title("Heatmap tương quan giữa các biến", fontsize=14)
-st.pyplot(fig5)
+# Chart 3: Orders Over Time
+st.subheader("Chart 3: Orders Over Time")
+processed_data['Month'] = processed_data['Date'].dt.to_period('M').astype(str)
+orders_by_month = processed_data.groupby('Month')['Quantity_Ordered'].sum().reset_index()
+fig3 = px.line(orders_by_month, x='Month', y='Quantity_Ordered', title='Total Quantity Ordered Over Time',
+               markers=True, color_discrete_sequence=['#636EFA'])
+st.plotly_chart(fig3)
+
+st.subheader("Code for Chart 3")
 st.code("""
-fig5, ax5 = plt.subplots(figsize=(8, 6))
-corr = df[['Quantity_Ordered', 'Stock_Remaining', 'Order_Month', 'SKU_Code', 'Unit_Price']].corr()
-sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax5, fmt=".2f")
-ax5.set_title("Heatmap tương quan giữa các biến", fontsize=14)
-st.pyplot(fig5)
+processed_data['Month'] = processed_data['Date'].dt.to_period('M').astype(str)
+orders_by_month = processed_data.groupby('Month')['Quantity_Ordered'].sum().reset_index()
+fig3 = px.line(orders_by_month, x='Month', y='Quantity_Ordered', title='Total Quantity Ordered Over Time',
+               markers=True, color_discrete_sequence=['#636EFA'])
+st.plotly_chart(fig3)
 """, language="python")
 
-# -----------------------
-# 4. MÔ HÌNH DỰ ĐOÁN
-# -----------------------
-st.title("🤖 Dự đoán số lượng đơn hàng")
+# Chart 4: Unit Price Distribution by Product
+st.subheader("Chart 4: Unit Price Distribution by Product")
+fig4 = px.box(processed_data, x='Product_Name', y='Unit_Price', title='Unit Price Distribution by Product',
+              color='Product_Name', color_discrete_sequence=px.colors.qualitative.Pastel)
+st.plotly_chart(fig4)
 
-# Tạo X, y cho mô hình
-X = df[['SKU_Code', 'Stock_Remaining', 'Order_Month', 'Unit_Price']]
-y = df['Quantity_Ordered']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Huấn luyện mô hình RandomForest
-model = RandomForestRegressor(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
-
-# Giao diện nhập liệu cho dự đoán
-st.subheader("Nhập thông tin để dự đoán")
-sku_input = st.selectbox("Chọn sản phẩm (SKU)", df['SKU'].unique())
-stock_input = st.slider("Tồn kho hiện tại", min_value=0, max_value=100, value=10)
-month_input = st.slider("Tháng đặt hàng", min_value=1, max_value=12, value=6)
-unit_price_input = st.slider("Đơn giá", min_value=0.0, max_value=2000.0, value=500.0)
-
-# Dự đoán
-sku_code = le.transform([sku_input])[0]
-input_data = [[sku_code, stock_input, month_input, unit_price_input]]
-predicted_qty = model.predict(input_data)[0]
-
-# Hiển thị kết quả
-st.subheader("Kết quả dự đoán:")
-st.write(f"Số lượng dự đoán: **{int(predicted_qty)}** đơn vị")
+st.subheader("Code for Chart 4")
 st.code("""
-sku_code = le.transform([sku_input])[0]
-input_data = [[sku_code, stock_input, month_input, unit_price_input]]
-predicted_qty = model.predict(input_data)[0]
-st.write(f"Số lượng dự đoán: **{int(predicted_qty)}** đơn vị")
+fig4 = px.box(processed_data, x='Product_Name', y='Unit_Price', title='Unit Price Distribution by Product',
+              color='Product_Name', color_discrete_sequence=px.colors.qualitative.Pastel)
+st.plotly_chart(fig4)
 """, language="python")
+
+# Chart 5: Stock Remaining vs. Quantity Ordered
+st.subheader("Chart 5: Stock Remaining vs. Quantity Ordered")
+fig5 = px.scatter(processed_data, x='Quantity_Ordered', y='Stock_Remaining', color='Product_Name',
+                  title='Stock Remaining vs. Quantity Ordered', size='Total_Price',
+                  color_discrete_sequence=px.colors.qualitative.Bold)
+st.plotly_chart(fig5)
+
+st.subheader("Code for Chart 5")
+st.code("""
+fig5 = px.scatter(processed_data, x='Quantity_Ordered', y='Stock_Remaining', color='Product_Name',
+                  title='Stock Remaining vs. Quantity Ordered', size='Total_Price',
+                  color_discrete_sequence=px.colors.qualitative.Bold)
+st.plotly_chart(fig5)
+""", language="python")
+
+# --- Step 4: Model Selection and Training ---
+st.header("Step 4: Model Selection and Training")
+st.write("Given the dataset, a suitable task is to predict **Total_Price** based on features like Quantity_Ordered, Unit_Price, Stock_Remaining, and Product_Name. Since this is a regression task (predicting a continuous variable), a **Random Forest Regressor** is chosen for its robustness, ability to handle non-linear relationships, and feature importance insights.")
+
+def train_model(data):
+    # Prepare features and target
+    X = data[['Quantity_Ordered', 'Unit_Price', 'Stock_Remaining']]
+    X = pd.concat([X, pd.get_dummies(data['Product_Name'], prefix='Product')], axis=1)
+    y = data['Total_Price']
+    
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Train Random Forest model
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+    
+    # Evaluate model
+    y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    return model, mse, r2
+
+st.subheader("Code for Model Training")
+st.code("""
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+
+def train_model(data):
+    X = data[['Quantity_Ordered', 'Unit_Price', 'Stock_Remaining']]
+    X = pd.concat([X, pd.get_dummies(data['Product_Name'], prefix='Product')], axis=1)
+    y = data['Total_Price']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    return model, mse, r2
+""", language="python")
+
+# Train and display model results
+model, mse, r2 = train_model(processed_data)
+st.subheader("Model Performance")
+st.write(f"Mean Squared Error: {mse:.2f}")
+st.write(f"R² Score: {r2:.2f}")
+
+# --- Step 5: Save Processed Data ---
+st.header("Step 5: Save Processed Data")
+output = io.StringIO()
+processed_data.to_csv(output, index=False)
+st.download_button(
+    label="Download Processed Data",
+    data=output.getvalue(),
+    file_name="processed_orders.csv",
+    mime="text/csv"
+)
+
+st.subheader("Code for Saving Data")
+st.code("""
+output = io.StringIO()
+processed_data.to_csv(output, index=False)
+st.download_button(
+    label="Download Processed Data",
+    data=output.getvalue(),
+    file_name="processed_orders.csv",
+    mime="text/csv"
+)
+""", language="python")
+
+if __name__ == "__main__":
+    st.write("App executed successfully!")
