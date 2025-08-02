@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
-import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+import os
 
 # Thiết lập cấu hình trang
 st.set_page_config(page_title="Phân tích & Dự đoán Đơn hàng", layout="wide")
@@ -30,13 +30,21 @@ if df.empty:
 
 # Xử lý dữ liệu
 # Chuyển đổi cột Date sang định dạng datetime
-df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
 
 # Tạo cột Order_Month từ cột Date
 df['Order_Month'] = df['Date'].dt.month
 
 # Xử lý giá trị thiếu
-df = df.dropna(subset=['Date', 'Order_Month', 'SKU', 'Quantity_Ordered', 'Stock_Remaining'])
+df = df.dropna(subset=['Date', 'Order_Month', 'SKU', 'Quantity_Ordered', 'Stock_Remaining', 'Unit_Price'])
+
+# Xóa các bản ghi trùng lặp
+df = df.drop_duplicates()
+
+# Kiểm tra và chuẩn hóa dữ liệu số
+df['Quantity_Ordered'] = pd.to_numeric(df['Quantity_Ordered'], errors='coerce').fillna(0).astype(int)
+df['Stock_Remaining'] = pd.to_numeric(df['Stock_Remaining'], errors='coerce').fillna(0).astype(int)
+df['Unit_Price'] = pd.to_numeric(df['Unit_Price'], errors='coerce').fillna(0).astype(float)
 
 # Mã hóa cột SKU thành giá trị số
 le = LabelEncoder()
@@ -137,13 +145,13 @@ st.pyplot(fig4)
 # Biểu đồ 5: Heatmap tương quan
 st.markdown("### Biểu đồ 5: Ma trận tương quan giữa các biến")
 fig5, ax5 = plt.subplots(figsize=(8, 6))
-corr = df[['Quantity_Ordered', 'Stock_Remaining', 'Order_Month', 'SKU_Code']].corr()
+corr = df[['Quantity_Ordered', 'Stock_Remaining', 'Order_Month', 'SKU_Code', 'Unit_Price']].corr()
 sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax5, fmt=".2f")
 ax5.set_title("Heatmap tương quan giữa các biến", fontsize=14)
 st.pyplot(fig5)
 st.code("""
 fig5, ax5 = plt.subplots(figsize=(8, 6))
-corr = df[['Quantity_Ordered', 'Stock_Remaining', 'Order_Month', 'SKU_Code']].corr()
+corr = df[['Quantity_Ordered', 'Stock_Remaining', 'Order_Month', 'SKU_Code', 'Unit_Price']].corr()
 sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax5, fmt=".2f")
 ax5.set_title("Heatmap tương quan giữa các biến", fontsize=14)
 st.pyplot(fig5)
@@ -155,7 +163,7 @@ st.pyplot(fig5)
 st.title("🤖 Dự đoán số lượng đơn hàng")
 
 # Tạo X, y cho mô hình
-X = df[['SKU_Code', 'Stock_Remaining', 'Order_Month']]
+X = df[['SKU_Code', 'Stock_Remaining', 'Order_Month', 'Unit_Price']]
 y = df['Quantity_Ordered']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -168,10 +176,11 @@ st.subheader("Nhập thông tin để dự đoán")
 sku_input = st.selectbox("Chọn sản phẩm (SKU)", df['SKU'].unique())
 stock_input = st.slider("Tồn kho hiện tại", min_value=0, max_value=100, value=10)
 month_input = st.slider("Tháng đặt hàng", min_value=1, max_value=12, value=6)
+unit_price_input = st.slider("Đơn giá", min_value=0.0, max_value=2000.0, value=500.0)
 
 # Dự đoán
 sku_code = le.transform([sku_input])[0]
-input_data = [[sku_code, stock_input, month_input]]
+input_data = [[sku_code, stock_input, month_input, unit_price_input]]
 predicted_qty = model.predict(input_data)[0]
 
 # Hiển thị kết quả
@@ -179,7 +188,7 @@ st.subheader("Kết quả dự đoán:")
 st.write(f"Số lượng dự đoán: **{int(predicted_qty)}** đơn vị")
 st.code("""
 sku_code = le.transform([sku_input])[0]
-input_data = [[sku_code, stock_input, month_input]]
+input_data = [[sku_code, stock_input, month_input, unit_price_input]]
 predicted_qty = model.predict(input_data)[0]
 st.write(f"Số lượng dự đoán: **{int(predicted_qty)}** đơn vị")
 """, language="python")
